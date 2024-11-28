@@ -41,9 +41,13 @@ export default defineConfig(({ mode }) => {
       alias: {
         "@": path.resolve(__dirname, "./src"),
         buffer: 'buffer',
+        process: 'process/browser',
+        stream: 'stream-browserify',
+        util: 'util',
       },
     },
     define: {
+      'process.env': process.env,
       global: 'globalThis',
       'process.env.VITE_PROPOSAL_CONTRACT_CODE': JSON.stringify(env.VITE_PROPOSAL_CONTRACT_CODE),
     },
@@ -61,12 +65,8 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         plugins: [],
         output: {
-          manualChunks: {
-            'ton-core': ['ton-core'],
-            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-            'ui-vendor': ['@tonconnect/ui-react', '@radix-ui/react-icons', 'sonner'],
-          },
-        },
+          manualChunks: undefined
+        }
       },
       assetsInlineLimit: 4096,
       chunkSizeWarningLimit: 1024,
