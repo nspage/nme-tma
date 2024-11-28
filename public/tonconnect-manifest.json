@@ -1,9 +1,9 @@
 {
-  "url": "%VITE_APP_URL%",
+  "url": "https://nme-event-badge-tma.vercel.app",
   "name": "TON Event Badge Platform",
-  "iconUrl": "%VITE_APP_URL%/icon.png",
-  "termsOfUseUrl": "%VITE_APP_URL%/terms",
-  "privacyPolicyUrl": "%VITE_APP_URL%/privacy",
+  "iconUrl": "https://nme-event-badge-tma.vercel.app/icon.png",
+  "termsOfUseUrl": "https://nme-event-badge-tma.vercel.app/terms",
+  "privacyPolicyUrl": "https://nme-event-badge-tma.vercel.app/privacy",
   "version": "0.1.0",
   "items": [
     {

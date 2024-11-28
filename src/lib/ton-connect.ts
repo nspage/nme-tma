@@ -1,9 +1,9 @@
 import { CHAIN } from '@tonconnect/protocol'
 
-// Use local manifest in development
+// Use local manifest in development, production URL otherwise
 export const manifestUrl = import.meta.env.DEV 
   ? 'http://localhost:5173/tonconnect-manifest.json'
-  : `${window.location.origin}/tonconnect-manifest.json`
+  : 'https://nme-event-badge-tma.vercel.app/tonconnect-manifest.json'
 
 export const tonConnectOptions = {
   manifestUrl,
@@ -17,7 +17,7 @@ export const tonConnectOptions = {
     ]
   },
   actionsConfiguration: {
-    twaReturnUrl: window.location.origin,
+    twaReturnUrl: import.meta.env.DEV ? 'http://localhost:5173' : 'https://nme-event-badge-tma.vercel.app',
     skipRedirectToWallet: true, // Handle wallet interactions in TWA
   },
   uiPreferences: {
