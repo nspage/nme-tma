@@ -40,6 +40,10 @@ export interface EventResponse {
 }
 
 const isDevelopment = import.meta.env.MODE === 'development'
+const BADGE_COLLECTION_ADDRESS = import.meta.env.VITE_BADGE_COLLECTION_ADDRESS
+
+// Use mock data if in development or if contract address is not set
+const useMockData = isDevelopment || !BADGE_COLLECTION_ADDRESS
 
 class EventService {
   private client: TonClient | null = null;
@@ -57,8 +61,11 @@ class EventService {
 
   private async initializeCollection() {
     if (!this.collection) {
+      if (!BADGE_COLLECTION_ADDRESS) {
+        throw new Error('Badge collection contract address is not configured');
+      }
       const client = await this.initializeClient();
-      const address = Address.parse(import.meta.env.VITE_BADGE_COLLECTION_ADDRESS);
+      const address = Address.parse(BADGE_COLLECTION_ADDRESS);
       this.collection = new BadgeCollection(address);
       await this.collection.init(client);
     }
@@ -66,7 +73,7 @@ class EventService {
   }
 
   async createEvent(input: CreateEventInput): Promise<EventResponse> {
-    if (isDevelopment) {
+    if (useMockData) {
       const newEvent: EventResponse = {
         ...input,
         id: Math.random().toString(36).substring(7),
@@ -76,6 +83,7 @@ class EventService {
       mockEvents.push(newEvent);
       return newEvent;
     }
+
     try {
       const collection = await this.initializeCollection();
       
@@ -105,60 +113,26 @@ class EventService {
       };
     } catch (error) {
       console.error('Error creating event:', error);
-      throw new Error('Failed to create event. Please try again.');
-    }
-  }
-
-  async getEvent(id: string): Promise<EventResponse> {
-    if (isDevelopment) {
-      const event = mockEvents.find(e => e.id === id);
-      if (!event) {
-        throw new Error('Event not found');
-      }
-      return event;
-    }
-    try {
-      const collection = await this.initializeCollection();
-      const event = await collection.getEvent(id);
-      
-      return {
-        id,
-        title: event.metadata.name,
-        description: event.metadata.description,
-        date: event.metadata.attributes.event_date,
-        location: event.metadata.attributes.location,
-        category: event.metadata.attributes.category,
-        badgeImage: event.metadata.image,
-        badgeRole: event.metadata.attributes.role,
-        badgeAttributes: {
-          achievement: event.metadata.attributes.achievement,
-          customField1: event.metadata.attributes.custom_field_1,
-          customField2: event.metadata.attributes.custom_field_2,
-        },
-        createdAt: event.createdAt,
-        updatedAt: event.updatedAt,
-      };
-    } catch (error) {
-      console.error('Error fetching event:', error);
-      throw new Error('Failed to fetch event. Please try again.');
+      throw error;
     }
   }
 
   async getEvents(): Promise<EventResponse[]> {
-    if (isDevelopment) {
+    if (useMockData) {
       return mockEvents;
     }
+
     try {
       const collection = await this.initializeCollection();
-      const events = await collection.getEvents();
-      
+      const events = await collection.getBadges();
+
       return events.map(event => ({
         id: event.id,
         title: event.metadata.name,
         description: event.metadata.description,
         date: event.metadata.attributes.event_date,
         location: event.metadata.attributes.location,
-        category: event.metadata.attributes.category,
+        category: event.metadata.attributes.category || 'General',
         badgeImage: event.metadata.image,
         badgeRole: event.metadata.attributes.role,
         badgeAttributes: {
@@ -171,12 +145,48 @@ class EventService {
       }));
     } catch (error) {
       console.error('Error fetching events:', error);
-      throw new Error('Failed to fetch events. Please try again.');
+      throw error;
+    }
+  }
+
+  async getEvent(id: string): Promise<EventResponse | null> {
+    if (useMockData) {
+      return mockEvents.find(event => event.id === id) || null;
+    }
+
+    try {
+      const collection = await this.initializeCollection();
+      const event = await collection.getBadge(id);
+
+      if (!event) {
+        return null;
+      }
+
+      return {
+        id: event.id,
+        title: event.metadata.name,
+        description: event.metadata.description,
+        date: event.metadata.attributes.event_date,
+        location: event.metadata.attributes.location,
+        category: event.metadata.attributes.category || 'General',
+        badgeImage: event.metadata.image,
+        badgeRole: event.metadata.attributes.role,
+        badgeAttributes: {
+          achievement: event.metadata.attributes.achievement,
+          customField1: event.metadata.attributes.custom_field_1,
+          customField2: event.metadata.attributes.custom_field_2,
+        },
+        createdAt: event.createdAt,
+        updatedAt: event.updatedAt,
+      };
+    } catch (error) {
+      console.error('Error fetching event:', error);
+      throw error;
     }
   }
 
   async updateEvent(id: string, input: Partial<EventResponse>): Promise<EventResponse> {
-    if (isDevelopment) {
+    if (useMockData) {
       const index = mockEvents.findIndex(e => e.id === id);
       if (index === -1) {
         throw new Error('Event not found');
@@ -191,7 +201,7 @@ class EventService {
   }
 
   async deleteEvent(id: string): Promise<void> {
-    if (isDevelopment) {
+    if (useMockData) {
       const index = mockEvents.findIndex(e => e.id === id);
       if (index === -1) {
         throw new Error('Event not found');
