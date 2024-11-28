@@ -1,6 +1,10 @@
 import { ApiResponse } from '../types/api'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+
+if (!API_BASE_URL) {
+  throw new Error('API_BASE_URL is not defined in environment variables')
+}
 
 export class ApiError extends Error {
   constructor(
@@ -50,39 +54,54 @@ async function makeRequest<T>(
     if (error instanceof ApiError) {
       throw error
     }
+    
+    // Handle network errors
+    if (error instanceof Error) {
+      throw new ApiError(
+        'NETWORK_ERROR',
+        'Failed to connect to the server',
+        error.message
+      )
+    }
+    
     throw new ApiError(
-      'NETWORK_ERROR',
-      'Failed to connect to the server',
+      'UNKNOWN_ERROR',
+      'An unexpected error occurred',
       error
     )
   }
 }
 
 export const apiClient = {
-  get: <T>(endpoint: string, options?: RequestInit) =>
-    makeRequest<T>(endpoint, { ...options, method: 'GET' }),
+  get<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
+    return makeRequest<T>(endpoint, { ...options, method: 'GET' })
+  },
 
-  post: <T>(endpoint: string, data?: any, options?: RequestInit) =>
-    makeRequest<T>(endpoint, {
+  post<T>(endpoint: string, data?: any, options?: RequestInit): Promise<ApiResponse<T>> {
+    return makeRequest<T>(endpoint, {
       ...options,
       method: 'POST',
-      body: JSON.stringify(data),
-    }),
+      body: data ? JSON.stringify(data) : undefined,
+    })
+  },
 
-  put: <T>(endpoint: string, data?: any, options?: RequestInit) =>
-    makeRequest<T>(endpoint, {
+  put<T>(endpoint: string, data?: any, options?: RequestInit): Promise<ApiResponse<T>> {
+    return makeRequest<T>(endpoint, {
       ...options,
       method: 'PUT',
-      body: JSON.stringify(data),
-    }),
+      body: data ? JSON.stringify(data) : undefined,
+    })
+  },
 
-  patch: <T>(endpoint: string, data?: any, options?: RequestInit) =>
-    makeRequest<T>(endpoint, {
+  patch<T>(endpoint: string, data?: any, options?: RequestInit): Promise<ApiResponse<T>> {
+    return makeRequest<T>(endpoint, {
       ...options,
       method: 'PATCH',
-      body: JSON.stringify(data),
-    }),
+      body: data ? JSON.stringify(data) : undefined,
+    })
+  },
 
-  delete: <T>(endpoint: string, options?: RequestInit) =>
-    makeRequest<T>(endpoint, { ...options, method: 'DELETE' }),
+  delete<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
+    return makeRequest<T>(endpoint, { ...options, method: 'DELETE' })
+  },
 }
