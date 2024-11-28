@@ -1,41 +1,31 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import twaLogo from './assets/tapps.png'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Outlet } from 'react-router-dom'
+import { TonConnectUIProvider } from '@tonconnect/ui-react'
+import { Layout } from '@/components/layout'
+import { manifestUrl } from '@/lib/ton-connect'
+import { Toaster } from 'sonner'
+import { StorageProvider } from '@/contexts/StorageContext'
 
-import WebApp from '@twa-dev/sdk'
+// Pages
+import { HomePage } from '@/pages'
+import { ConnectPage } from '@/pages/connect'
+import { ProposalsPage } from '@/pages/proposals'
+import { ProposalPage } from '@/pages/proposals/[id]'
+import { EventsPage } from '@/pages/events'
+import { EventPage } from '@/pages/events/[id]'
+import { CreateEventPage } from '@/pages/events/create'
+import { GroupsPage } from '@/pages/groups'
+import { GroupPage } from '@/pages/groups/[id]'
+import { ProfilePage } from '@/pages/profile'
 
-function App() {
-  const [count, setCount] = useState(0)
-
+export function App() {
   return (
-    <>
-      <div>
-        <a href="https://ton.org/dev" target="_blank">
-          <img src={twaLogo} className="logo" alt="TWA logo" />
-        </a>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>TWA + Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-      </div>
-      {/*  */}
-      <div className="card">
-        <button onClick={() => WebApp.showAlert(`Hello World! Current count is ${count}`)}>
-            Show Alert
-        </button>
-      </div>
-    </>
+    <TonConnectUIProvider manifestUrl={manifestUrl}>
+      <StorageProvider>
+        <Layout>
+          <Outlet />
+        </Layout>
+        <Toaster richColors position="top-right" />
+      </StorageProvider>
+    </TonConnectUIProvider>
   )
 }
-
-export default App

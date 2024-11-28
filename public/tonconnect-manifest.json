@@ -1,0 +1,18 @@
+{
+  "url": "%VITE_APP_URL%",
+  "name": "TON Event Badge Platform",
+  "iconUrl": "%VITE_APP_URL%/icon.png",
+  "termsOfUseUrl": "%VITE_APP_URL%/terms",
+  "privacyPolicyUrl": "%VITE_APP_URL%/privacy",
+  "version": "0.1.0",
+  "items": [
+    {
+      "name": "ton_addr",
+      "description": "Connect TON wallet to create and manage event badges"
+    },
+    {
+      "name": "ton_proof",
+      "description": "Sign message to verify wallet ownership"
+    }
+  ]
+}

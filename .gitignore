@@ -7,10 +7,24 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+.pnp
+.pnp.js
+
+# Build outputs
 dist
 dist-ssr
 *.local
+build
+.vercel
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +36,30 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Testing
+coverage
+.nyc_output
+
+# Cache and temp files
+.cache
+.temp
+.tmp
+*.tsbuildinfo
+
+# PWA files
+**/public/workbox-*.js
+**/public/sw.js
+**/public/fallback-*.js
+
+# Vercel
+.vercel/
+.now/
+
+# Debug
+debug.log
+debug.json
+
+# System files
+Thumbs.db
+desktop.ini

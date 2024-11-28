@@ -1,0 +1,113 @@
+#pragma version =0.4.0;
+
+#include "imports/stdlib.fc";
+#include "imports/params.fc";
+
+;; Collection contract for event badges (SBT)
+;; Implements TEP-62 NFT standard for collections with SBT modifications
+
+;; Storage variables
+global int next_item_index;
+global cell collection_content;
+global cell owner_address;
+global cell minter_address;
+global cell metadata_storage_provider; ;; TON Storage provider address
+
+;; Collection initialization
+() load_data() impure {
+    var ds = get_data().begin_parse();
+    next_item_index = ds~load_uint(64);
+    collection_content = ds~load_ref();
+    owner_address = ds~load_ref();
+    minter_address = ds~load_ref();
+    metadata_storage_provider = ds~load_ref();
+    ds.end_parse();
+}
+
+() save_data() impure {
+    set_data(begin_cell()
+        .store_uint(next_item_index, 64)
+        .store_ref(collection_content)
+        .store_ref(owner_address)
+        .store_ref(minter_address)
+        .store_ref(metadata_storage_provider)
+        .end_cell());
+}
+
+;; Get methods
+(int, cell, slice, slice, cell) get_collection_data() method_id {
+    load_data();
+    return (next_item_index, collection_content, owner_address.begin_parse(), minter_address.begin_parse(), metadata_storage_provider);
+}
+
+slice get_nft_address_by_index(int index) method_id {
+    load_data();
+    cell state_init = calculate_nft_state_init(index, collection_content);
+    return calculate_nft_address(state_init);
+}
+
+cell get_nft_content(int index, cell individual_content) method_id {
+    load_data();
+    return (begin_cell()
+        .store_uint(index, 64)
+        .store_ref(collection_content)
+        .store_ref(individual_content)
+        .end_cell());
+}
+
+;; Ownership verification
+int verify_ownership(slice owner_address, int badge_id) method_id {
+    load_data();
+    slice badge_address = get_nft_address_by_index(badge_id);
+    cell owner_info = get_badge_owner_info(badge_address);
+    return equal_slices(owner_address, owner_info.begin_parse());
+}
+
+;; Metadata handling
+cell get_badge_metadata(int badge_id) method_id {
+    load_data();
+    slice badge_address = get_nft_address_by_index(badge_id);
+    return get_badge_metadata_content(badge_address);
+}
+
+() update_storage_provider(slice new_provider) impure {
+    load_data();
+    throw_unless(401, equal_slices(sender_address(), owner_address.begin_parse()));
+    metadata_storage_provider = begin_cell().store_slice(new_provider).end_cell();
+    save_data();
+}
+
+;; Minting
+() mint_badge(slice to_address, cell badge_content, cell metadata_bag) impure {
+    load_data();
+    
+    ;; Check if sender is authorized minter
+    throw_unless(401, equal_slices(sender_address(), minter_address.begin_parse()));
+    
+    ;; Calculate badge address and state
+    int item_index = next_item_index;
+    cell state_init = calculate_nft_state_init(item_index, collection_content);
+    slice nft_address = calculate_nft_address(state_init);
+    
+    ;; Update next index
+    next_item_index = next_item_index + 1;
+    save_data();
+    
+    ;; Prepare badge data with SBT flag and metadata
+    cell badge_data = begin_cell()
+        .store_uint(1, 1)  ;; SBT flag (non-transferable)
+        .store_slice(to_address)  ;; Owner address
+        .store_ref(badge_content)
+        .store_ref(metadata_bag)  ;; TON Storage metadata bag
+        .end_cell();
+    
+    ;; Send deploy message
+    var msg = begin_cell()
+        .store_uint(0x18, 6)
+        .store_slice(nft_address)
+        .store_coins(0.02 TON) ;; Gas for deployment
+        .store_uint(4 + 2 + 1, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 1)
+        .store_ref(state_init)
+        .store_ref(badge_data);
+    send_raw_message(msg.end_cell(), 1); ;; Pay transfer fees separately
+}

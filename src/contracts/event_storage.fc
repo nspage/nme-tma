@@ -1,0 +1,93 @@
+#include "stdlib.fc";
+
+;; Storage TL-B Scheme
+;; storage#_ owner:MsgAddress data_registry:(HashmapE 256 ^Cell) = Storage;
+
+(slice, cell) load_data() inline {
+    var ds = get_data().begin_parse();
+    return (
+        ds~load_msg_addr(),  ;; owner
+        ds~load_dict()       ;; data_registry
+    );
+}
+
+() save_data(slice owner, cell data_registry) impure inline {
+    set_data(begin_cell()
+        .store_slice(owner)
+        .store_dict(data_registry)
+        .end_cell()
+    );
+}
+
+;; Get owner address
+(slice) get_owner() method_id {
+    var (owner, _) = load_data();
+    return owner;
+}
+
+;; Get data registry
+(cell) get_data_registry() method_id {
+    var (_, data_registry) = load_data();
+    return data_registry;
+}
+
+() store_data(int data_id, cell data) impure {
+    var (owner, data_registry) = load_data();
+    throw_unless(401, equal_slice_bits(owner, sender_address()));
+    
+    data_registry~udict_set_ref(256, data_id, data);
+    save_data(owner, data_registry);
+}
+
+() update_data(int data_id, cell data) impure {
+    var (owner, data_registry) = load_data();
+    throw_unless(401, equal_slice_bits(owner, sender_address()));
+    throw_unless(404, data_registry.udict_has?(256, data_id));
+    
+    data_registry~udict_set_ref(256, data_id, data);
+    save_data(owner, data_registry);
+}
+
+() delete_data(int data_id) impure {
+    var (owner, data_registry) = load_data();
+    throw_unless(401, equal_slice_bits(owner, sender_address()));
+    throw_unless(404, data_registry.udict_has?(256, data_id));
+    
+    data_registry~udict_delete?(256, data_id);
+    save_data(owner, data_registry);
+}
+
+() recv_internal(int msg_value, cell in_msg_full, slice in_msg_body) impure {
+    if (in_msg_body.slice_empty?()) { 
+        return (); 
+    }
+
+    slice cs = in_msg_full.begin_parse();
+    int flags = cs~load_uint(4);
+    slice sender_address = cs~load_msg_addr();
+
+    int op = in_msg_body~load_uint(32);
+    int query_id = in_msg_body~load_uint(64);
+    
+    if (op == 1) { ;; store_data
+        int data_id = in_msg_body~load_uint(256);
+        cell data = in_msg_body~load_ref();
+        store_data(data_id, data);
+        return ();
+    }
+    
+    if (op == 2) { ;; update_data
+        int data_id = in_msg_body~load_uint(256);
+        cell data = in_msg_body~load_ref();
+        update_data(data_id, data);
+        return ();
+    }
+    
+    if (op == 3) { ;; delete_data
+        int data_id = in_msg_body~load_uint(256);
+        delete_data(data_id);
+        return ();
+    }
+    
+    throw(0xffff); ;; Unknown operation
+}

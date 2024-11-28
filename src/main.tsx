@@ -1,14 +1,21 @@
+import './polyfills'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
+import { RouterProvider } from 'react-router-dom'
+import { router } from './router'
 import './index.css'
 
-import WebApp from '@twa-dev/sdk'
+// Buffer polyfill
+import { Buffer } from 'buffer'
+window.Buffer = Buffer
 
-WebApp.ready();
+const root = document.getElementById('root');
+if (!root) {
+  throw new Error('Root element not found');
+}
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(root).render(
   <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+    <RouterProvider router={router} />
+  </React.StrictMode>
 )
