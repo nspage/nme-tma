@@ -1,7 +1,8 @@
 import { Buffer } from 'buffer'
-globalThis.Buffer = Buffer
+if (typeof window !== 'undefined') {
+  window.Buffer = Buffer
+}
 
-import './polyfills'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'

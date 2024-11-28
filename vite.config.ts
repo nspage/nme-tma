@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { VitePWA } from 'vite-plugin-pwa'
+import { Buffer } from 'buffer'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -45,8 +46,10 @@ export default defineConfig(({ mode }) => {
     define: {
       global: 'globalThis',
       'process.env': process.env,
+      Buffer: ['buffer', 'Buffer'],
     },
     optimizeDeps: {
+      include: ['buffer'],
       esbuildOptions: {
         define: {
           global: 'globalThis'
