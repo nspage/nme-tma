@@ -2,6 +2,7 @@ import { TonClient } from '@ton/ton';
 import { Address } from '@ton/core';
 import { BadgeCollection } from '@/contracts/badge-collection';
 import { getHttpEndpoint } from '@orbs-network/ton-access';
+import { mockEvents } from './mock/events';
 
 export interface CreateEventInput {
   title: string;
@@ -38,6 +39,8 @@ export interface EventResponse {
   updatedAt: string;
 }
 
+const isDevelopment = import.meta.env.MODE === 'development'
+
 class EventService {
   private client: TonClient | null = null;
   private collection: BadgeCollection | null = null;
@@ -63,6 +66,16 @@ class EventService {
   }
 
   async createEvent(input: CreateEventInput): Promise<EventResponse> {
+    if (isDevelopment) {
+      const newEvent: EventResponse = {
+        ...input,
+        id: Math.random().toString(36).substring(7),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      mockEvents.push(newEvent);
+      return newEvent;
+    }
     try {
       const collection = await this.initializeCollection();
       
@@ -97,6 +110,13 @@ class EventService {
   }
 
   async getEvent(id: string): Promise<EventResponse> {
+    if (isDevelopment) {
+      const event = mockEvents.find(e => e.id === id);
+      if (!event) {
+        throw new Error('Event not found');
+      }
+      return event;
+    }
     try {
       const collection = await this.initializeCollection();
       const event = await collection.getEvent(id);
@@ -125,6 +145,9 @@ class EventService {
   }
 
   async getEvents(): Promise<EventResponse[]> {
+    if (isDevelopment) {
+      return mockEvents;
+    }
     try {
       const collection = await this.initializeCollection();
       const events = await collection.getEvents();
@@ -150,6 +173,33 @@ class EventService {
       console.error('Error fetching events:', error);
       throw new Error('Failed to fetch events. Please try again.');
     }
+  }
+
+  async updateEvent(id: string, input: Partial<EventResponse>): Promise<EventResponse> {
+    if (isDevelopment) {
+      const index = mockEvents.findIndex(e => e.id === id);
+      if (index === -1) {
+        throw new Error('Event not found');
+      }
+      mockEvents[index] = {
+        ...mockEvents[index],
+        ...input
+      };
+      return mockEvents[index];
+    }
+    throw new Error('Not implemented');
+  }
+
+  async deleteEvent(id: string): Promise<void> {
+    if (isDevelopment) {
+      const index = mockEvents.findIndex(e => e.id === id);
+      if (index === -1) {
+        throw new Error('Event not found');
+      }
+      mockEvents.splice(index, 1);
+      return;
+    }
+    throw new Error('Not implemented');
   }
 }
 
