@@ -40,16 +40,11 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
-        buffer: 'buffer',
-        process: 'process/browser',
-        stream: 'stream-browserify',
-        util: 'util',
       },
     },
     define: {
-      'process.env': process.env,
       global: 'globalThis',
-      'process.env.VITE_PROPOSAL_CONTRACT_CODE': JSON.stringify(env.VITE_PROPOSAL_CONTRACT_CODE),
+      'process.env': process.env,
     },
     optimizeDeps: {
       esbuildOptions: {
@@ -59,23 +54,14 @@ export default defineConfig(({ mode }) => {
       }
     },
     build: {
-      sourcemap: !isProd,
-      minify: isProd ? 'esbuild' : false,
-      target: 'esnext',
+      commonjsOptions: {
+        transformMixedEsModules: true,
+      },
       rollupOptions: {
-        plugins: [],
         output: {
           manualChunks: undefined
         }
-      },
-      assetsInlineLimit: 4096,
-      chunkSizeWarningLimit: 1024,
-      cssCodeSplit: true,
-      reportCompressedSize: true,
-    },
-    preview: {
-      port: 4173,
-      strictPort: true,
+      }
     }
   }
 })

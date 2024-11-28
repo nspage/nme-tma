@@ -1,3 +1,6 @@
+import { Buffer } from 'buffer'
+globalThis.Buffer = Buffer
+
 import './polyfills'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
@@ -6,8 +9,6 @@ import { router } from './router'
 import './index.css'
 
 // Buffer polyfill
-import { Buffer } from 'buffer'
-window.Buffer = Buffer
 
 const root = document.getElementById('root');
 if (!root) {
