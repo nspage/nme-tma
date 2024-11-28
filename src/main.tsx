@@ -1,7 +1,4 @@
-import { Buffer } from 'buffer'
-if (typeof window !== 'undefined') {
-  window.Buffer = Buffer
-}
+import 'virtual:buffer-polyfill'
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
