@@ -96,7 +96,7 @@ export default function GroupsPage() {
                       </CardTitle>
                       <div className="flex items-center text-sm text-muted-foreground">
                         <Users className="mr-1 h-4 w-4" />
-                        {group.members.length} members
+                        {group.memberCount} members
                       </div>
                     </div>
                   </div>
