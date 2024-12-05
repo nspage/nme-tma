@@ -40,7 +40,7 @@ export interface EventResponse {
 }
 
 const isDevelopment = import.meta.env.MODE === 'development'
-const BADGE_COLLECTION_ADDRESS = import.meta.env.VITE_BADGE_COLLECTION_ADDRESS
+const BADGE_COLLECTION_ADDRESS = import.meta.env.VITE_BADGE_COLLECTION_ADDRESS?.trim()
 
 // Use mock data if in development or if contract address is not set
 const useMockData = isDevelopment || !BADGE_COLLECTION_ADDRESS
@@ -62,18 +62,26 @@ class EventService {
   private async initializeCollection() {
     if (!this.collection) {
       if (!BADGE_COLLECTION_ADDRESS) {
+        console.warn('Badge collection contract address is not configured, using mock data');
         throw new Error('Badge collection contract address is not configured');
       }
-      const client = await this.initializeClient();
-      const address = Address.parse(BADGE_COLLECTION_ADDRESS);
-      this.collection = new BadgeCollection(address);
-      await this.collection.init(client);
+
+      try {
+        const client = await this.initializeClient();
+        const address = Address.parse(BADGE_COLLECTION_ADDRESS);
+        this.collection = new BadgeCollection(address);
+        await this.collection.init(client);
+      } catch (error) {
+        console.error('Error initializing collection:', error);
+        throw new Error('Failed to initialize badge collection. Please check the contract address.');
+      }
     }
     return this.collection;
   }
 
   async createEvent(input: CreateEventInput): Promise<EventResponse> {
     if (useMockData) {
+      console.log('Using mock data for createEvent');
       const newEvent: EventResponse = {
         ...input,
         id: Math.random().toString(36).substring(7),
@@ -119,6 +127,7 @@ class EventService {
 
   async getEvents(): Promise<EventResponse[]> {
     if (useMockData) {
+      console.log('Using mock data for getEvents');
       return mockEvents;
     }
 
@@ -151,6 +160,7 @@ class EventService {
 
   async getEvent(id: string): Promise<EventResponse | null> {
     if (useMockData) {
+      console.log('Using mock data for getEvent');
       return mockEvents.find(event => event.id === id) || null;
     }
 
